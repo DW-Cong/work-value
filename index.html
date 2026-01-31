@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作性价比全维度测评报告 2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: -apple-system, sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+        .input-dark { @apply w-full bg-slate-800 border border-slate-700 rounded-lg p-2 outline-none focus:border-indigo-500 text-sm; }
+        label { @apply block text-xs text-slate-400 mb-1; }
+        #reportOutput { display: none; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center">
+
+    <!-- 输入表单 -->
+    <div id="inputForm" class="max-w-xl w-full space-y-4">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 tracking-tight">
+                性价比测评 2.0 专业版
+            </h1>
+            <p class="text-slate-500 text-xs mt-2 uppercase tracking-widest">Job Value Analysis Professional</p>
+        </header>
+
+        <div class="glass-card p-6 rounded-3xl shadow-2xl space-y-4">
+            <!-- 经济维度 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label>年薪总包 (万元)</label>
+                    <input type="number" id="salary" placeholder="含奖金/公积金" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full">
+                </div>
+                <div>
+                    <label>地区 PPP (购买力平价)</label>
+                    <select id="ppp" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full">
+                        <option value="1">中国大陆 (1.0)</option>
+                        <option value="1.5">欧美地区 (1.5)</option>
+                        <option value="0.8">东南亚 (0.8)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 时间维度 -->
+            <div class="grid grid-cols-3 gap-2">
+                <div><label>周工作天数</label><input type="number" id="workDays" value="5" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full"></div>
+                <div><label>日总工时/h</label><input type="number" id="hours" value="9" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full"></div>
+                <div><label>周WFH天数</label><input type="number" id="wfh" value="0" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <div><label>日通勤/h</label><input type="number" id="commute" value="1.5" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full"></div>
+                <div><label>日摸鱼/h</label><input type="number" id="relax" value="1" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full"></div>
+                <div><label>年假+法定/d</label><input type="number" id="holiday" value="16" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full"></div>
+            </div>
+
+            <!-- 软性维度 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label>职业稳定性</label>
+                    <select id="stability" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full">
+                        <option value="1.2">事业单位/编 (极高)</option>
+                        <option value="1.1">大厂/核心国企 (高)</option>
+                        <option value="1.0">普通外企/民企 (中)</option>
+                        <option value="0.7">劳务派遣/OD (低)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>所在城市</label>
+                    <select id="city" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full">
+                        <option value="0.8">一线城市 (高压)</option>
+                        <option value="1.0">新一线/二线 (适中)</option>
+                        <option value="1.3">三四线/老家 (舒适)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label>领导/同事关系</label>
+                    <select id="emotion" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full">
+                        <option value="1.1">神仙氛围 (情绪价值满格)</option>
+                        <option value="1.0">正常社交 (公事公办)</option>
+                        <option value="0.7">勾心斗角 (心累想走)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>最高学历</label>
+                    <select id="edu" class="input-dark bg-slate-800 border border-slate-700 rounded-lg p-2 w-full">
+                        <option value="1.2">博士</option>
+                        <option value="1.1">硕士</option>
+                        <option value="1.0">本科</option>
+                        <option value="0.9">大专及以下</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="generateReport()" class="w-full btn-gradient h-14 rounded-2xl font-black text-white shadow-xl shadow-indigo-500/20 active:scale-95 transition-transform">
+                生成全维度分析报告
+            </button>
+        </div>
+    </div>
+
+    <!-- 报告页面 -->
+    <div id="reportOutput" class="max-w-md w-full">
+        <div id="captureArea" class="glass-card p-6 rounded-[2.5rem] border-2 border-indigo-500/40 relative overflow-hidden">
+            <!-- 装饰背景 -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-indigo-600/10 rounded-full blur-3xl"></div>
+            
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <span class="text-[10px] text-indigo-400 font-mono tracking-widest uppercase">Analysis Report</span>
+                    <h2 class="text-2xl font-black italic tracking-tighter">工作性价比测评</h2>
+                </div>
+                <div class="text-right">
+                    <p class="text-[8px] text-slate-500 font-mono" id="reportID"></p>
+                    <p class="text-[8px] text-slate-500">2024 LAB DATA</p>
+                </div>
+            </div>
+            
+            <!-- 分数大卡片 -->
+            <div class="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-3xl p-6 mb-6 border border-white/5">
+                <div class="flex justify-around items-center">
+                    <div class="text-center">
+                        <p class="text-slate-400 text-[10px] uppercase mb-1 font-bold">Comprehensive Score</p>
+                        <p id="scoreNum" class="text-5xl font-black text-indigo-400 drop-shadow-lg">0</p>
+                    </div>
+                    <div class="h-12 w-px bg-slate-700"></div>
+                    <div class="text-center">
+                        <p class="text-slate-400 text-[10px] uppercase mb-1 font-bold">Value Rank</p>
+                        <p id="levelRank" class="text-5xl font-black text-purple-400 italic">D</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 雷达图 -->
+            <div class="relative w-full aspect-square mb-6 px-4">
+                <canvas id="radarChart"></canvas>
+            </div>
+
+            <!-- 深度评语 -->
+            <div class="bg-indigo-600/5 rounded-2xl p-5 border border-indigo-500/10 mb-4">
+                <p id="commentTitle" class="font-black text-lg mb-2 text-indigo-300"></p>
+                <p id="commentText" class="text-xs text-slate-300 leading-relaxed font-medium"></p>
+            </div>
+
+            <!-- 底部Slogan -->
+            <div class="flex items-center justify-between opacity-50 px-2">
+                <p class="text-[8px] font-mono italic">Work/Life Balance Laboratory</p>
+                <div class="flex items-center gap-1">
+                    <div class="w-1 h-1 bg-green-500 rounded-full"></div>
+                    <p class="text-[8px]">Verified Result</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 动作按钮 -->
+        <div class="mt-6 space-y-3">
+            <button onclick="saveImage()" class="w-full bg-white text-black h-14 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span>保存测试报告海报</span>
+            </button>
+            <button onclick="location.reload()" class="w-full text-slate-500 text-sm py-2 hover:text-white transition-colors">重新测评我的冤种指数</button>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+
+        function generateReport() {
+            // 获取输入值
+            const salary = parseFloat(document.getElementById('salary').value) || 0;
+            const ppp = parseFloat(document.getElementById('ppp').value);
+            const workDays = parseFloat(document.getElementById('workDays').value) || 5;
+            const hours = parseFloat(document.getElementById('hours').value) || 8;
+            const wfh = parseFloat(document.getElementById('wfh').value) || 0;
+            const commute = parseFloat(document.getElementById('commute').value) || 0;
+            const relax = parseFloat(document.getElementById('relax').value) || 0;
+            const holiday = parseFloat(document.getElementById('holiday').value) || 0;
+            
+            const stability = parseFloat(document.getElementById('stability').value);
+            const city = parseFloat(document.getElementById('city').value);
+            const emotion = parseFloat(document.getElementById('emotion').value);
+            const edu = parseFloat(document.getElementById('edu').value);
+
+            if(!salary) return alert("老板，不输入薪资没法算呀！");
+
+            // --- 核心计算逻辑 ---
+            // 1. 计算年有效工时 (减去WFH带来的通勤节省)
+            const realCommute = Math.max(0, (workDays - wfh) * commute);
+            const weeklyHours = (workDays * (hours - relax)) + realCommute;
+            const yearlyHours = weeklyHours * 52 - (holiday * (hours / 1.2)); // 假期抵减
+            
+            // 2. 基础时薪 (万元/小时)
+            const hourlyRate = (salary / yearlyHours) * 10000;
+            
+            // 3. 各维度计算 (0-100)
+            const d_income = Math.min(100, (hourlyRate / 1.5) * ppp); // 经济回报
+            const d_time = Math.min(100, (1 - (weeklyHours / 60)) * 100 + (wfh * 10)); // 时间自由
+            const d_stability = stability * 80; // 职业稳定性
+            const d_environment = city * 75; // 环境溢价
+            const d_emotion = emotion * 85; // 情绪价值
+            const d_edu_match = Math.min(100, (hourlyRate / (edu * 50)) * 100); // 学历溢价
+
+            // 综合评分
+            const finalScore = ((d_income + d_time + d_stability + d_environment + d_emotion + d_edu_match) / 6 * edu).toFixed(1);
+
+            // --- UI 渲染 ---
+            document.getElementById('inputForm').style.display = 'none';
+            document.getElementById('reportOutput').style.display = 'block';
+            document.getElementById('scoreNum').innerText = finalScore;
+            document.getElementById('reportID').innerText = 'ID: ' + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+            // 精细化等级与评语
+            let level = "D";
+            let title = "";
+            let text = "";
+
+            if(finalScore >= 95) {
+                level="SSS"; title="职场锦鲤·公费度日"; 
+                text="你这哪是在上班？你是在通过劳动合法‘诈骗’企业。这种性价比建议直接干到退休，千万别跳槽，外面的世界很危险！";
+            } else if(finalScore >= 85) {
+                level="SS"; title="神仙公司·社畜天花板"; 
+                text="你的工作不仅体面，而且极其滋润。生活与工作达到了诡异的动态平衡，你是99%打工人心中的理想形态。";
+            } else if(finalScore >= 75) {
+                level="S"; title="优质资产·职场赢家"; 
+                text="非常扎实的一份工作。虽然偶尔会有疲惫，但回报和稳定性远超同龄人，属于典型的‘钱多事少离家近’选手。";
+            } else if(finalScore >= 60) {
+                level="A"; title="合格社畜·体面生存"; 
+                text="恭喜你，你维持了作为一个体面人的最后尊严。虽然没有大富大贵，但你成功避开了最卷的修罗场。";
+            } else if(finalScore >= 45) {
+                level="B"; title="职场苦行僧·劳碌命"; 
+                text="性价比堪忧。你现在的每一分钱，都是用头发和下班后的灵魂换来的。建议反思一下，这种牺牲真的值得吗？";
+            } else if(finalScore >= 30) {
+                level="C"; title="现代奴隶·大冤种"; 
+                text="你是老板眼里的好员工，家人眼里的失踪人口。你是在用命换钱，关键钱还没换到多少。快打开招聘软件压压惊！";
+            } else {
+                level="D"; title="当代活菩萨·慈善先锋"; 
+                text="你不是在上班，你是在给老板捐款。系统检测到你这属于纯粹的‘职场慈善’行为。快报警吧，这工作多干一秒都是对生命的亵渎！";
+            }
+            
+            document.getElementById('levelRank').innerText = level;
+            document.getElementById('commentTitle').innerText = title;
+            document.getElementById('commentText').innerText = text;
+
+            // 渲染雷达图
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['经济回报', '时间自由', '职业稳定', '城市压力', '情绪价值', '学历匹配'],
+                    datasets: [{
+                        data: [d_income, d_time, d_stability, d_environment, d_emotion, d_edu_match],
+                        fill: true,
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderColor: 'rgb(129, 140, 248)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgb(168, 85, 247)',
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            min: 0, max: 100,
+                            ticks: { display: false },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            angleLines: { color: 'rgba(255,255,255,0.1)' },
+                            pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function saveImage() {
+            const area = document.getElementById('captureArea');
+            html2canvas(area, {
+                backgroundColor: '#0f172a',
+                scale: 3, // 提高清晰度
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '性价比报告_' + new Date().getTime() + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
